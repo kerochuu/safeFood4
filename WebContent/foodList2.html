@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="Stylesheet" href="css/bootstrap.min.css" />
+<meta charset="utf-8">
+<!-- <meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no"> -->
+<meta name="description" content="">
+<meta name="author" content="">
+
+<title>SSAFY 4반 김준호☆박영호</title>
+
+<!-- Bootstrap core CSS -->
+<link href="./Resources/vendor/bootstrap/css/bootstrap.min.css"
+	rel="stylesheet">
+
+<!-- Custom fonts for this template -->
+<link href="./Resources/vendor/fontawesome-free/css/all.min.css"
+	rel="stylesheet">
+<link
+	href="./Resources/vendor/simple-line-icons/css/simple-line-icons.css"
+	rel="stylesheet" type="text/css">
+<link
+	href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic"
+	rel="stylesheet" type="text/css">
+
+<!-- Custom styles for this template -->
+<link href="./Resources/css/landing-page.min.css" rel="stylesheet">
+<script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+<script src="./js/bootstrap.min.js"></script>
+
+
+<script>
+$(function(){
+	var sel;
+	var searchWord;
+
+	var isFirst=localStorage.getItem("isFirst");
+	if(isFirst!='false') {
+		printList();
+		localStorage.setItem("isFirst", false);
+	}
+
+	$("select").change(function(){
+		sel = $("select option:selected").attr('value');
+		localStorage.setItem("sel", sel);
+	});
+	
+	$("#searchWord").change(function(){
+		searchWord = $(this).val();
+		if(searchWord=="") searchWord='default';
+		localStorage.setItem("searchWord", searchWord);
+
+	})
+	
+
+	$("#search").click(function(){
+		$("#listarea").empty();
+		printList();
+		//localStorage.setItem("searchWord", "default");
+		//localStorage.setItem("sel","name");
+	});
+	
+	printList();
+
+	//id가 foodlist인 div 만들어서 보이게 하기
+	//xml 파일을 읽어와 리스트로 만들기
+	function printList(){
+		var code;
+		searchWord = localStorage.getItem("searchWord");
+		sel = localStorage.getItem("sel");
+		if(searchWord=="") searchWord="default";
+		
+		 $("#listarea").append("<div id='foodList' class='card-deck'></div>");
+		 if(searchWord=='default'){
+			 $.ajax({
+				type:"GET",
+				url:"main.do?action=searchBookList",
+				dataType:"xml",
+				success:function(xml){
+					var row;
+					$(xml).find('food').each(function(){
+						row = $("<div class='row'></div>");
+						code = $(this).find('code').text();
+						var name = $(this).find('name').text();
+						var maker = $(this).find('maker').text();
+						var image = $(this).find('img').text();
+						var card = $("<div class='card border-primary'></div>");
+						$("<img class='card-img-top' src='' alt='Card image cap'></img>").attr("src",image).appendTo(card);			//foodName은 foodList의 사품 이름에만 사용하는  class!!
+		
+						var cardBody = $("<div class='card-body'></div>");
+						$("<h5 class='card-title'></h5>").text(name).appendTo(cardBody);
+				        $("<p class='card-text'><small class='text-muted'></small></p>").text(maker).appendTo(cardBody);
+						//button 
+						var btn = $("<div></div>");
+						$(
+								"<a href='Detail.html' class='btn btn-primary btn-sm detailBtn'>자세히 보기</a>")
+								.attr("code", code)
+								.appendTo(btn);
+						$(
+								"<a href='' class='btn btn-danger btn-sm detailBtn'>찜하기</a>")
+								.appendTo(btn);
+						$(
+								"<a href='' class='btn btn-secondary btn-sm detailBtn'>추가하기</a>")
+								.appendTo(btn);
+						$(btn).appendTo(cardBody);
+						cardBody.appendTo(card);
+						card.appendTo(row);
+						row.appendTo("#foodList");
+
+					})
+				}
+			});
+		}
+		 
+		if(searchWord != "default"){
+			$.ajax({
+				type : "GET",
+				url : "main.do?action=searchBookList",
+				dataType : "xml",
+				success : function(xml) {
+					var items = $(xml).find('food').filter(function() {
+						return $(this).find(sel).text().includes(searchWord);
+					});
+				
+					var row;
+					items.each(function() {
+						row = $("<div class='row'></div>");
+						code = $(this).find('code').text();
+						var name = $(this).find('name').text();
+						var maker = $(this).find('maker').text();						
+						var image = $(this).find('img').text();
+						var card = $("<div class='card border-primary'></div>");
+						$("<img class='card-img-top' src='' alt='Card image cap'></img>")
+								.attr("src", image).appendTo(card); 
+						
+						var cardBody = $("<div class='card-body'></div>");
+						$("<h5 class='card-title'></h5>").text(
+								name).appendTo(cardBody);
+						$(
+								"<p class='card-text'><small class='text-muted'></small></p>")
+								.text(maker).appendTo(cardBody);
+						//button 
+						var btn = $("<div></div>");
+						$(
+								"<a href='Detail.html' class='btn btn-primary btn-sm detailBtn'>자세히 보기</a>")
+								.attr("code", code).appendTo(
+										btn);
+						$(
+								"<a href='' class='btn btn-danger btn-sm detailBtn'>찜하기</a>")
+								.appendTo(btn);
+						$(
+								"<a href='' class='btn btn-secondary btn-sm detailBtn'>추가하기</a>")
+								.appendTo(btn);
+						$("<div></div>").append(btn).appendTo(
+								cardBody);
+						cardBody.appendTo(card);
+						card.appendTo(row);
+						row.appendTo("#foodList");
+					});
+				}
+			});
+			localStorage.setItem("searchWord", "default");
+			localStorage.setItem("sel","name");
+
+		
+		}
+	}
+	// button을 누르면 local storage에 code 저장하고 popup 띄우기
+	$('#listarea').on('click', '.detailBtn', function() {
+		localStorage.setItem("foodCode", $(this).attr('code'));
+	});
+	
+	$('.dropdownInfo li').click(function(){
+		localStorage.setItem("isFirst", true);
+		localStorage.setItem("searchWord", 'default');
+	});
+	})
+</script>
+<style>
+.card{
+	width: 250px;
+	height: 350px;
+}
+
+.card-img-top{
+	margin-top: 10px;
+}
+.btn{
+	margin:0px 1px 0px 0px;
+}
+#listarea{
+	margin: 0px 5%;
+}
+
+.row{
+	margin: 0px 5px 20px 5px;
+}
+</style>
+</head>
+
+<body>
+
+	<!-- Navigation -->
+	<nav class="navbar navbar-light bg-light ">
+
+		<div class="row" style="width: 1080px;">
+			<div class="col">
+				<a class="navbar-brand"
+					href="Main.jsp"><img
+					src="./Resources/img/logo.png " width="70px" height="50px" /></a>
+
+			</div>
+
+
+			<div class="col-8">
+
+				<div class='row'>
+
+					<div class="navbar-header">
+						<button class="navbar-toggle collapsed" data-toggle="collapse"
+							data-target="#target">
+							<span class="sr-only">Toggle navigation</span> <span
+								class="icon-bar"></span> <span class="icon-bar"></span> <span
+								class="icon-bar"></span>
+						</button>
+					</div>
+
+
+
+					
+					<div class="col mb-2 mb-md-0 ">
+						<button type="submit"
+							class="btn btn-block btn-lg btn-primary caret"
+							style="height: 50px; color: blue; background-color: white;">공지사항</button>
+					</div>
+					<div class=" col mb-2 mb-md-0 dropdown" style="float: left;" id="target">
+						<button type="submit"
+							class="btn btn-block btn-lg btn-primary caret dropdown-toggle"
+							data-toggle="dropdown"
+							style="height: 50px; color: blue; background-color: white;">식품정보</button>
+						<ul class="dropdown-menu dropdownInfo" style="width: 250px;">
+							<li><a href="foodList2.html">이름별</a></li>
+							<li><a href="foodList2.html">제조사별</a></li>
+
+						</ul>
+
+					</div>
+					<div class=" col mb-2 mb-md-0 dropdown" style="float: left;" id="target">
+						<button type="submit"
+							class="btn btn-block btn-lg btn-primary caret dropdown-toggle"
+							data-toggle="dropdown"
+							style="height: 50px; color: blue; background-color: white;">음식추천</button>
+						<ul class="dropdown-menu" style="width: 250px;">
+							<li><a href="#">칼로리별</a></li>
+							<li><a href="#">알레르기별</a></li>
+
+						</ul>
+
+					</div>
+				
+				</div>
+			</div>
+
+
+			<div class="col">
+				<div class="col">
+					<a href="Login.jsp" type="submit" class="btn btn-block btn-lg btn-primary">로그인</a>
+					<a href="Join.jsp" type="submit" class="btn btn-block btn-lg btn-primary">회원가입</a>
+				</div>
+			</div>
+		</div>
+	</nav>
+	
+	<!-- Masthead -->
+	<header class="m text-center"  style="margin: 50px auto;>
+		<div class="overlay"  style="margin: 50px auto;></div>
+		<div class="container" style="margin: 50px auto;">
+			<div class="row">
+				<div class="col-xl-9 mx-auto">
+					<h1 class="mb-5 mx-auto mb-5 mb-lg-0 mb-lg-3">안전먹거리 페어프로젝트!</h1>
+					<h3 class="mb-5 mx-auto mb-5 mb-lg-0 mb-lg-3">4반 김준호☆박영호</h3>
+					<br /> <br />
+				</div>
+
+
+				<div class="col-md-12 col-lg-12 col-xl-7 mx-auto">
+					<form>
+
+						<div class="form-row">
+							<div class="col">
+
+								<select id="selectSearch" class="form-control form-control-lg">
+									<option value="name" selected="selected">상품명</option>
+									<option value="maker">제조사</option>
+									<option value="material">원재료</option>
+								</select>
+							</div>
+							<div class="col-8">
+								<input type="search" id="searchWord" class="form-control form-control-lg"
+									placeholder="먹거리 검색">
+							</div>
+							<div class="col">
+								<input  type="button" id="search" class="btn btn-block btn-lg btn-primary" value="검색하기!"/>
+							</div>
+
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</header>
+
+	<!-- list area -->
+	<div id="listarea"></div>
+
+
+	<!-- Footer -->
+	<footer class="footer bg-light">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-6 h-100 text-center text-lg-left my-auto">
+					<ul class="list-inline mb-2">
+						<li class="list-inline-item"><a href="#">About</a></li>
+						<li class="list-inline-item">&sdot;</li>
+						<li class="list-inline-item"><a href="#">Contact</a></li>
+						<li class="list-inline-item">&sdot;</li>
+						<li class="list-inline-item"><a href="#">Terms of Use</a></li>
+						<li class="list-inline-item">&sdot;</li>
+						<li class="list-inline-item"><a href="#">Privacy Policy</a></li>
+					</ul>
+					<p class="text-muted small mb-4 mb-lg-0">&copy; Samsung
+						Software Academy For Youth. All Rights Reserved.</p>
+				</div>
+				<div class="col-lg-6 h-100 text-center text-lg-right my-auto">
+					<ul class="list-inline mb-0">
+						<li class="list-inline-item mr-3"><a href="#"> <i
+								class="fab fa-facebook fa-2x fa-fw"></i>
+						</a></li>
+						<li class="list-inline-item mr-3"><a href="#"> <i
+								class="fab fa-twitter-square fa-2x fa-fw"></i>
+						</a></li>
+						<li class="list-inline-item"><a href="#"> <i
+								class="fab fa-instagram fa-2x fa-fw"></i>
+						</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</footer>
+
+	<!-- Bootstrap core JavaScript -->
+	<script src="vendor/jquery/jquery.min.js"></script>
+	<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
